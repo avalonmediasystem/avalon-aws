@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd assets
+for d in "$@"; do
+  echo "Building ${d}.zip..."
+  cd $d
+  if [ -e ../build/$d.zip ]; then
+    rm ../build/$d.zip
+  fi
+  zip -r ../build/$d.zip * .ebextensions
+  cd ..
+  echo
+done
+
+cd ..
+aws s3 sync assets/build/ s3://nul-repo-deploy/
