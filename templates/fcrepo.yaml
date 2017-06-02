@@ -159,11 +159,13 @@ Resources:
         Value: 2g
       - Namespace: aws:elasticbeanstalk:container:tomcat:jvmoptions
         OptionName: JVM Options
-        Value: !Sub '-Duser.dir="/var/lib/fcrepo" -Dfcrepo.postgresql.host="${RDSHostname}"
+        Value: !Sub '-Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -XX:+DisableExplicitGC
+          -Duser.dir="/var/lib/fcrepo" -Dfcrepo.postgresql.host="${RDSHostname}"
           -Dfcrepo.postgresql.port="${RDSPort}" -Dfcrepo.postgresql.username="${RDSUsername}"
           -Dfcrepo.postgresql.password="${RDSPassword}" -Daws.accessKeyId="${BinaryBucketAccess}"
           -Daws.secretKey="${BinaryBucketAccess.SecretAccessKey}" -Daws.bucket="${BinaryBucket}"
-          -Dfcrepo.modeshape.configuration="classpath:/config/jdbc-postgresql-s3/repository.json"'
+          -Dfcrepo.modeshape.configuration="file:/etc/fcrepo/repository.json"
+          -Dfcrepo.spring.configuration="file:/etc/fcrepo/fcrepo-config.xml"'
       - Namespace: aws:elasticbeanstalk:application
         OptionName: Application Healthcheck URL
         Value: /rest

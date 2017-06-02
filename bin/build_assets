@@ -12,5 +12,7 @@ for d in "$@"; do
   echo
 done
 
-cd ..
-aws s3 sync assets/build/ s3://nul-repo-deploy/
+if [ -z $NO_UPLOAD ]; then
+  cd ..
+  aws s3 sync assets/build/ s3://nul-repo-deploy/
+fi
