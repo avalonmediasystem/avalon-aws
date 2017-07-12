@@ -34,10 +34,7 @@ task :audit_solution_stacks do
     nil
   end
 
-  client = Aws::ElasticBeanstalk::Client.new(
-    access_key_id: 'AKIAJKKI6WULSX6GTSPQ',
-    secret_access_key: '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'
-  )
+  client = Aws::ElasticBeanstalk::Client.new
   stacks = client.list_available_solution_stacks.solution_stacks
   matcher = FuzzyMatch.new(stacks)
   files = Dir['templates/*.yaml','templates/*.json']
