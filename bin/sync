@@ -1,0 +1,10 @@
+#!/bin/bash
+
+S3_BUCKET=${S3_BUCKET:-nul-repo-deploy}
+S3_KEY=${S3_KEY:-infrastructure/current}
+
+for d in templates; do
+  aws s3 sync $@ $d s3://${S3_BUCKET}/cloudformation/${S3_KEY}/$d
+done
+
+aws s3 sync $@ lambdas s3://${S3_BUCKET}/cloudformation/${S3_KEY}/lambdas --exclude '*' --include '*.zip' 
