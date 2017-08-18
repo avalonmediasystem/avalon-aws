@@ -1,14 +1,18 @@
 Notes for Deploying Avalon-aws via CloudFront:
 
+    Stuff to do in preparation for runnig the CloudFront script:
+
     1. Clone this repo and checkout the desired branch, sorta.  The zip files referenced in the cloudfront
           script are not in git.  They are in the pre-existing S3 bucket called "nul-repo-deploy"
     2. Generate an IAM public and private key pair.
     3. Create an EC2 Key Pair: e.g. "devops"
     4. Sign the license agreement for OpenVPN Access Server
            http://aws.amazon.com/marketplace/pp?sku=f2ew2wrz425a1jagnifd02u5t
-    5. Create a new zone delegation in library.northwestern.edu via InfoBlocks to delegate to AWS.  
+    5. Ensure that the SolutionStackName specified in fcrepo.yaml points to a currently supported version,
+         e.g.  "64bit Amazon Linux 2017.03 v2.6.3 running Tomcat 8 Java 8"
+    6. Create a new zone delegation in library.northwestern.edu via InfoBlocks to delegate to AWS.  
          eg. devops-test.library.northwestern.edu
-    6. Create a Public Hosted Zone in Route 53,  e.g. devops-test.library.northwestern.edu
+    7. Create a Public Hosted Zone in Route 53,  e.g. devops-test.library.northwestern.edu
        - create a Public Hosted Zone in Route 53, e.g. repo.devops-test.library.northwestern.edu
        - create a Private Hosted Zone in Route 53, e.g. repo.vpc.devops-test.library.northwestern.edu
        - Create a Record Set in the first Hosted Zone of type "NS" for each of the sub domains,
@@ -18,10 +22,11 @@ Notes for Deploying Avalon-aws via CloudFront:
             ns-1041.awsdns-02.org
             ns-1928.awsdns-49.co.uk
             ns-981.awsdns-58.net
-    7. Use the pre-existing S3 bucket named "nul-repo-deploy" for deployment.
-    8. Create an S3 bucket to store binary files, e.g. nul-devopsbucket
-    9. CloudFront: using the "infrastructure.yaml" file (found in the S3 nul-repo-deploy bucket),
-         fill in the following values:
+    8. Use the pre-existing S3 bucket named "nul-repo-deploy" for deployment.
+    9. Create an S3 bucket to store binary files, e.g. nul-devopsbucket
+   
+   10. Installing CloudFront: using the "infrastructure.yaml" file (found in the 
+   	  S3 nul-repo-deploy bucket), fill in the following values:
         - Stack name:  e.g. "cheese"
         - S3Bucket: e.g. "nul-repo-deploy"
         - S3BucketEB: e.g. "nul-repo-deploy"
