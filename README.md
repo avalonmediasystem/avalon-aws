@@ -8,8 +8,10 @@ Notes for Deploying Avalon-aws via CloudFront:
     3. Create an EC2 Key Pair: e.g. "devops"
     4. Sign the license agreement for OpenVPN Access Server
            http://aws.amazon.com/marketplace/pp?sku=f2ew2wrz425a1jagnifd02u5t
-    5. Ensure that the SolutionStackName specified in fcrepo.yaml points to a currently supported version,
+    5. Ensure that the SolutionStackName specified in the templates directory points to a currently supported version,
          e.g.  "64bit Amazon Linux 2017.03 v2.6.3 running Tomcat 8 Java 8"
+	 run "rake audit_solution_stacks" from within the repo to get a list of currently available EC2 instance versions.
+	 ^This script will audit all the template files and suggest version changes for the solutionstacks.
     6. Create a new zone delegation in library.northwestern.edu via InfoBlocks to delegate to AWS.  
          eg. devops-test.library.northwestern.edu
     7. Create a Public Hosted Zone in Route 53,  e.g. devops-test.library.northwestern.edu
