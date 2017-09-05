@@ -13,7 +13,7 @@ Notes for Deploying Avalon-aws via CloudFront:
     6. Create a new zone delegation in library.northwestern.edu via InfoBlocks to delegate to AWS.  
          eg. devops-test.library.northwestern.edu
     7. Create a Public Hosted Zone in Route 53,  e.g. devops-test.library.northwestern.edu
-### Maybe not???      - create a Public Hosted Zone in Route 53, e.g. repo.devops-test.library.northwestern.edu
+       - create a Public Hosted Zone in Route 53, e.g. repo.devops-test.library.northwestern.edu
        - create a Private Hosted Zone in Route 53, e.g. repo.vpc.devops-test.library.northwestern.edu
        - Create a Record Set in the first Hosted Zone of type "NS" for each of the sub domains,
           e.g. repo.devops-test.library.northwestern.edu and repo.vpc.devops-test.library.northwestern.edu
