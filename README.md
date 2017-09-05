@@ -24,7 +24,7 @@ Notes for Deploying Avalon-aws via CloudFront:
             ns-981.awsdns-58.net
     8. Use the pre-existing S3 bucket named "nul-repo-deploy" for deployment.
     9. Create an S3 bucket to store binary files, e.g. nul-devopsbucket
-   10. Installing CloudFront: using the "infrastructure.yaml" file (found in the 
+    10. Installing CloudFront: using the "infrastructure.yaml" file (found in the 
    	  S3 nul-repo-deploy bucket), fill in the following values:
         - Stack name:  e.g. "repo"
         - S3Bucket: e.g. "nul-repo-deploy"
