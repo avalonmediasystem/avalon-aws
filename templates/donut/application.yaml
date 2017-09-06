@@ -1,0 +1,315 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Hydra application stack
+Parameters:
+  InfrastructureStack:
+    Type: String
+    Description: Name of the CloudFormation hydra stack supporting this head
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
+  S3Bucket:
+    Type: String
+    Description: S3 bucket with cloudformation templates
+  S3BucketEB:
+    Type: String
+    Description: S3 bucket with the rails application zip
+  S3Key:
+    Type: String
+    Description: S3 key to the rails application zip
+  S3KeyPrefix:
+    Type: String
+    Description: S3 prefix to deployment artifacts
+    Default: infrastructure/current
+  SlackWebhookToken:
+    Type: String
+    Description: Slack generated token for Incoming Webhook
+    NoEcho: 'true'
+    Default: ''
+  SlackWebhookChannel:
+    Type: String
+    Description: Slack channel for posting notifications
+    Default: ''
+  WebappMinSize:
+    Type: Number
+    Description: Minimum number of instances
+    Default: '1'
+  WebappMaxSize:
+    Type: Number
+    Description: Maximum number of instances
+    Default: '4'
+  WorkerMinSize:
+    Type: Number
+    Description: Minimum number of instances
+    Default: '1'
+  WorkerMaxSize:
+    Type: Number
+    Description: Maximum number of instances
+    Default: '4'
+  SecretKeyBase:
+    Type: String
+    Description: Secret key for Rails
+    NoEcho: 'true'
+  RDSDatabaseName:
+    Type: String
+    Description: Database name
+  RDSUsername:
+    Type: String
+    Description: Username for Database
+  RDSPassword:
+    Type: String
+    Description: Password for Database
+    NoEcho: 'true'
+  QueuePrefix:
+    Type: String
+    Description: SQS Queue prefix
+  WebappInstanceType:
+    Type: String
+    Description: The EC2 instance type
+    Default: 't2.large'
+  WorkerInstanceType:
+    Type: String
+    Description: The EC2 instance type
+    Default: 't2.medium'
+  WebappHealthReportingSystemType:
+    Type: String
+    Description: Health reporting system
+    AllowedValues:
+    - enhanced
+    - basic
+    Default: enhanced
+  WorkerHealthReportingSystemType:
+    Type: String
+    Description: Health reporting system
+    AllowedValues:
+    - enhanced
+    - basic
+    Default: enhanced
+  ContinuousDeployment:
+    Type: String
+    Description: Configure continuous deployment for the webapp and workers?
+    AllowedValues:
+    - 'true'
+    - 'false'
+    Default: 'true'
+  SSLCertificateId:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of the SSL certificate
+    Default: ''
+  ConfigurationBucket:
+    Type: String
+    Description: The bucket to use for secure configs.
+Conditions:
+  CreateContinuousDeployment: !Equals [!Ref 'ContinuousDeployment', 'true']
+Resources:
+  HydraApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Ref 'AWS::StackName'
+      Description: Hybox service
+  HydraApplicationVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+      ApplicationName: !Ref 'HydraApplication'
+      Description: Hybox service version
+      SourceBundle:
+        S3Bucket: !Ref 'S3BucketEB'
+        S3Key: !Ref 'S3Key'
+  slack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        SlackWebhookToken: !Ref 'SlackWebhookToken'
+        SlackWebhookChannel: !Ref 'SlackWebhookChannel'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/slack.yaml'
+  database:
+    Type: Custom::DatabaseSchema
+    Version: '1.0'
+    Properties:
+      ServiceToken:
+        Fn::ImportValue: !Sub '${InfrastructureStack}-createdatabase-handler-ServiceToken'
+      DBName: !Ref 'RDSDatabaseName'
+      DBUser: !Ref 'RDSUsername'
+      DBPassword: !Ref 'RDSPassword'
+  ConfigurationBucketAccess:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref 'ConfigurationBucket'
+      PolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Resource:
+          - !Sub 'arn:aws:s3:::${ConfigurationBucket}'
+          - !Sub 'arn:aws:s3:::${ConfigurationBucket}/*'
+          Principal:
+            AWS:
+            - !GetAtt 'EC2Role.Arn'
+          Action:
+          - 's3:Get*'
+          - 's3:List*'
+  webapp:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: database
+    Properties:
+      Parameters:
+        StackName: !Ref 'AWS::StackName'
+        ApplicationName: !Ref 'HydraApplication'
+        VersionLabel: !Ref 'HydraApplicationVersion'
+        KeyName: !Ref 'KeyName'
+        MinSize: !Ref 'WebappMinSize'
+        MaxSize: !Ref 'WebappMaxSize'
+        PublicSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PublicSubnets'
+        PrivateSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PrivateSubnets'
+        SecurityGroups:
+          Fn::Join:
+          - ','
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-sg-Default'
+            - Fn::ImportValue: !Sub '${InfrastructureStack}-sg-Webapp'
+        LBSecurityGroups:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-sg-WebappLb'
+        HostedZoneName:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-dns-PublicZoneName'
+        SecretKeyBase: !Ref 'SecretKeyBase'
+        FcrepoUrl:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-fcrepo-URL'
+        SolrUrl:
+          Fn::Join:
+          - '/'
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-solr-URL'
+            - !Ref 'AWS::StackName'
+        ZookeeperHosts:
+          Fn::Join:
+          - '/'
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-zookeeper-EndpointAddress'
+            - configs
+        RedisHost:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointAddress'
+        RedisPort:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointPort'
+        RDSDatabaseName: !Ref 'RDSDatabaseName'
+        RDSUsername: !Ref 'RDSUsername'
+        RDSPassword: !Ref 'RDSPassword'
+        RDSHostname:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointAddress'
+        RDSPort:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointPort'
+        QueuePrefix: !Ref 'QueuePrefix'
+        DefaultQueue: !Ref 'DefaultQueue'
+        BeanstalkSNSTopic: !GetAtt 'slack.Outputs.BeanstalkSNSTopic'
+        InstanceType: !Ref 'WebappInstanceType'
+        HealthReportingSystemType: !Ref 'WebappHealthReportingSystemType'
+        IamInstanceProfile: !GetAtt 'EC2InstanceProfile.Arn'
+        SSLCertificateId: !Ref 'SSLCertificateId'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/donut/webapp.yaml'
+  workers:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: database
+    Properties:
+      Parameters:
+        StackName: !Ref 'AWS::StackName'
+        ApplicationName: !Ref 'HydraApplication'
+        VersionLabel: !Ref 'HydraApplicationVersion'
+        KeyName: !Ref 'KeyName'
+        MinSize: !Ref 'WorkerMinSize'
+        MaxSize: !Ref 'WorkerMaxSize'
+        PublicSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PublicSubnets'
+        PrivateSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PrivateSubnets'
+        SecurityGroups:
+          Fn::Join:
+          - ','
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-sg-Default'
+            - Fn::ImportValue: !Sub '${InfrastructureStack}-sg-Webapp'
+        LBSecurityGroups:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-sg-WebappLb'
+        HostedZoneName:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-dns-PublicZoneName'
+        SecretKeyBase: !Ref 'SecretKeyBase'
+        FcrepoUrl:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-fcrepo-URL'
+        SolrUrl:
+          Fn::Join:
+          - '/'
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-solr-URL'
+            - !Ref 'AWS::StackName'
+        ZookeeperHosts:
+          Fn::Join:
+          - '/'
+          - - Fn::ImportValue: !Sub '${InfrastructureStack}-zookeeper-EndpointAddress'
+            - configs
+        RedisHost:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointAddress'
+        RedisPort:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointPort'
+        RDSDatabaseName: !Ref 'RDSDatabaseName'
+        RDSUsername: !Ref 'RDSUsername'
+        RDSPassword: !Ref 'RDSPassword'
+        RDSHostname:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointAddress'
+        RDSPort:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointPort'
+        QueuePrefix: !Ref 'QueuePrefix'
+        DefaultQueue: !Ref 'DefaultQueue'
+        DefaultQueueName: !GetAtt 'DefaultQueue.QueueName'
+        BeanstalkSNSTopic: !GetAtt 'slack.Outputs.BeanstalkSNSTopic'
+        IamInstanceProfile: !GetAtt 'EC2InstanceProfile.Arn'
+        InstanceType: !Ref 'WorkerInstanceType'
+        HealthReportingSystemType: !Ref 'WorkerHealthReportingSystemType'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/donut/worker.yaml'
+  DefaultQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 3600
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt 'DefaultDeadLetterQueue.Arn'
+        maxReceiveCount: 5
+  DefaultDeadLetterQueue:
+    Type: AWS::SQS::Queue
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
+      - arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier
+      Policies:
+      - PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Action:
+            - ses:Send*
+            Resource:
+            - '*'
+            Effect: Allow
+        PolicyName: !Sub '${AWS::StackName}-MailerAccess'
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref 'EC2Role'
+  codepipeline:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateContinuousDeployment
+    Properties:
+      Parameters:
+        ApplicationName: !Ref 'HydraApplication'
+        WebappEnvironmentName: !GetAtt 'webapp.Outputs.EnvironmentName'
+        WorkerEnvironmentName: !GetAtt 'workers.Outputs.EnvironmentName'
+        S3Bucket: !Ref 'S3BucketEB'
+        S3Key: !Ref 'S3Key'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/codepipeline.yaml'
+Outputs:
+  URL:
+    Description: URL of the AWS Elastic Beanstalk Environment
+    Value: !GetAtt 'webapp.Outputs.URL'
