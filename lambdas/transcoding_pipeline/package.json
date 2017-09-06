@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "cfn-wrapper": "latest",
-    "aws-sdk": "latest"
+    "aws-sdk": "^2.110.0",
+    "cfn-wrapper": "latest"
   },
   "description": "AWS Lambda function to manage Elastic Transcoder pipelines from CloudFormation.",
   "directories": {},

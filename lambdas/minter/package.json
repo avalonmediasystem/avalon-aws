@@ -1,9 +1,8 @@
 {
   "dependencies": {
-    "aws-sdk": "^2.110.0",
-    "cfn-wrapper": "latest"
+    "uuid": "latest"
   },
-  "description": "AWS Lambda function to update other lambdas' environment info.",
+  "description": "AWS Lambda function to mint a unique ID",
   "directories": {},
   "license": "Apache-2.0",
   "main": "./index.js",
@@ -13,8 +12,8 @@
       "email": "mbklein@gmail.com"
     }
   ],
-  "name": "cfn-lambda_environment",
+  "name": "minter",
   "optionalDependencies": {},
   "readme": "ERROR: No README data found!",
-  "version": "0.0.2"
+  "version": "0.0.1"
 }

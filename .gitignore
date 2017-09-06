@@ -1,2 +1,3 @@
 assets/build/*
 lambdas/*.zip
+lambdas/*/node_modules
