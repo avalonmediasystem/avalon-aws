@@ -17,10 +17,10 @@ Notes for Deploying Avalon-aws via CloudFront:
     7. Create a Public Hosted Zone in Route 53,  e.g. devops-test.library.northwestern.edu
        (Note: if sub-domains exist in Route 53, delete them before re-launching stack in CloudFormation
        - e.g. slee.devops-test.library.northwestern.edu, e.g. slee.vpc.devops-test.library.northwestern.edu)
-    8. Use the pre-existing S3 bucket named "nul-slee-deploy" for deployment.
+    8. Use the pre-existing S3 bucket named "nul-repo-deploy" for deployment.
     9. Create an S3 bucket to store binary files, e.g. nul-devopsbucket
     10. Installing CloudFront Infrastructure Stack: using the "infrastructure.yaml" file (found in the 
-   	  S3 nul-slee-deploy bucket or a copy from GIT avalon-aws/templates/infrastructure.yaml), 
+   	  S3 nul-repo-deploy bucket or a copy from GIT avalon-aws/templates/infrastructure.yaml), 
           fill in the following values:
         - Stack name:  e.g. "slee"
         - S3Bucket: "nul-repo-deploy"
@@ -45,7 +45,7 @@ Notes for Deploying Avalon-aws via CloudFront:
           1) Create an S3 bucket called `nul-devops-test-configuration`.
           2) Put the above file into it at `cloudfront/pk-APKAJCMUDOESUFY7Z7GA.pem`
     12. Installing CloudFront Avalon Stack: using the "application.yaml" file (found in the 
-   	  S3 nul-slee-deploy bucket or a copy from avalon-aws/templates/avalon/application.yaml), 
+   	  S3 nul-repo-deploy bucket or a copy from avalon-aws/templates/avalon/application.yaml), 
           fill in the following values:
         - Stack name:  e.g. "smoke"
         - CloudFrontKeyFile: "pk-APKAJCMUDOESUFY7Z7GA.pem"
