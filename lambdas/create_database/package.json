@@ -2,7 +2,7 @@
   "dependencies": {
     "aws-sdk": "^2.110.0",
     "cfn-wrapper": "latest",
-    "pg": "^7.3.0"
+    "pg": "^6.1.5"
   },
   "description": "AWS Lambda function to create a database within an RDS instance.",
   "directories": {},
