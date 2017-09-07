@@ -2,8 +2,8 @@ Notes for Deploying Avalon-aws via CloudFront:
 
     Stuff to do in preparation for runnig the CloudFront script:
 
-    1. Clone this slee and checkout the desired branch, sorta.  The zip files referenced in the cloudfront
-          script are not in git.  They are in the pre-existing S3 bucket called "nul-slee-deploy"
+    1. Clone this repo and checkout the desired branch, sorta.  The zip files referenced in the cloudfront
+          script are not in git.  They are in the pre-existing S3 bucket called "nul-repo-deploy"
     2. Generate an IAM public and private key pair.
     3. Create an EC2 Key Pair: e.g. "devops"
     4. Sign the license agreement for OpenVPN Access Server
