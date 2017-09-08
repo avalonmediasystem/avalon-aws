@@ -16,7 +16,7 @@ Notes for Deploying Avalon-aws via CloudFront:
     5.  Ensure that the SolutionStackName specified in the templates directory 
           points to a currently supported version,
           e.g.  "64bit Amazon Linux 2017.03 v2.6.3 running Tomcat 8 Java 8"
-	  run "rake audit_solution_stacks" from within the slee to get a list of
+	  run "rake audit_solution_stacks" from within the repo to get a list of
 	  currently available EC2 instance versions.
 	  ^This script will audit all the template files and suggest version 
 	  changes for the solutionstacks.
@@ -42,8 +42,8 @@ Notes for Deploying Avalon-aws via CloudFront:
         - DatabasePassword: e.g. "MyNiftyPassword"
         - S3FedoraFilename: e.g. "fcrepo.zip"
         - VpnPassword: e.g. "MyNiftyPassword"
-        - FcsleeBinaryBucket: e.g. "nul-devopsbucket"
-        - FcsleeDatabasePassword: e.g. "MyNiftyPassword"
+        - FcrepoBinaryBucket: e.g. "nul-devopsbucket"
+        - FcrepoDatabasePassword: e.g. "MyNiftyPassword"
         - StackName: e.g. "slee"
         Click "Next"
         Tags: Select the IAM key created in step 2 and then click the "+" symbol
@@ -81,13 +81,19 @@ Notes for Deploying Avalon-aws via CloudFront:
         - S3Bucket: "nul-repo-deploy"
         - S3BucketEB: "nul-repo-deploy"
         - S3Key: "avalon/current/avalon.zip"
-        - SecretKeyBase: (32 bytes of random hex) 
-	    e.g. "26 3d 81 cb c7 9c f9 e7 be 76 7f 59 ec d5 d8 a9 1c 55 cd 45 d7
-	    a7 d3 dd ed db de 04 51 25 2d 90"
+        - SecretKeyBase: (32 bytes of random hex) e.g.
+	    "263d81cbc79cf9e7be767f59ecd5d8a91c55cd45d7a7d3ddeddbde0451252d90"
         - SlackWebHookChannel: (can be left blank)
         - SlackWebHookToken: (can be left blank)
         - SSLCertificadeID: (can be left blank) 
         - TrustedSigner: "845225713889"
         - WebappInstanceType: e.g. "t2.small"
         - WorkerInstanceType: e.g. "t2.small"
+        Click "Next"
+        Tags: Select the IAM key created in step 2 and then click the "+" symbol
+	to create corresponding Tags
+        Click "Next"
+        Check the "I acknowledge that AWS CloudFormation might creat IAM 
+	recourses with custom names." box.
+        Click "Create"
 
