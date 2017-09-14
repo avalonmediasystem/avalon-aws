@@ -37,7 +37,7 @@ task :audit_solution_stacks do
   client = Aws::ElasticBeanstalk::Client.new
   stacks = client.list_available_solution_stacks.solution_stacks
   matcher = FuzzyMatch.new(stacks)
-  files = Dir['templates/*.yaml','templates/*.json']
+  files = Dir['templates/**/*.yaml','templates/**/*.json']
   exit_code = 0
 
   files.each do |file|
