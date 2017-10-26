@@ -10,9 +10,7 @@ for d in "$@"; do
   zip -r ../build/$d.zip * .ebextensions
   cd ..
   echo
+  if [ -z $NO_UPLOAD ]; then
+    aws s3 sync assets/build/$d.zip s3://nul-repo-deploy/
+  fi
 done
-
-if [ -z $NO_UPLOAD ]; then
-  cd ..
-  aws s3 sync assets/build/ s3://nul-repo-deploy/
-fi
