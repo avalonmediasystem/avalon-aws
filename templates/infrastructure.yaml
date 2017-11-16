@@ -96,7 +96,7 @@ Parameters:
   RedisInstanceType:
     Type: String
     Description: Instance type to launch
-    Default: cache.m1.small
+    Default: cache.t2.small
   BastionInstanceType:
     Type: String
     Description: The EC2 instance type
