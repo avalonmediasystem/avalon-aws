@@ -449,6 +449,3 @@ DEPENDENCIES
   fuzzy_match
   jsonlint
   rake
-
-BUNDLED WITH
-   1.15.4
