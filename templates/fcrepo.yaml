@@ -159,7 +159,21 @@ Resources:
         Value: 2g
       - Namespace: aws:elasticbeanstalk:container:tomcat:jvmoptions
         OptionName: JVM Options
-        Value: !Sub '-Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -XX:+DisableExplicitGC -XX:MaxMetaspaceSize=512m -XX:+UseG1GC -Xmx1024m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Duser.dir="/var/lib/fcrepo" -Dfcrepo.postgresql.host="${RDSHostname}" -Dfcrepo.postgresql.port="${RDSPort}" -Dfcrepo.postgresql.username="${RDSUsername}" -Dfcrepo.postgresql.password="${RDSPassword}" -Daws.accessKeyId="${BinaryBucketAccess}" -Daws.secretKey="${BinaryBucketAccess.SecretAccessKey}" -Daws.bucket="${BinaryBucket}" -Dfcrepo.ispn.jgroups.configuration="file:/etc/fcrepo/jgroups-fcrepo-tcp.xml" -Djgroups.udp.mcast_addr=239.42.42.42 -Dfcrepo.ispn.configuration=/etc/fcrepo/infinispan.xml -Dfcrepo.modeshape.configuration="file:/etc/fcrepo/repository.json" -Dfcrepo.spring.configuration="file:/etc/fcrepo/fcrepo-config.xml"'
+        Value: !Sub '-Djava.awt.headless=true -Dfile.encoding=UTF-8 -server 
+          -XX:+DisableExplicitGC -XX:MaxMetaspaceSize=512m -XX:+UseG1GC -Xmx1024m 
+          -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true 
+          -Duser.dir="/var/lib/fcrepo" -Dfcrepo.postgresql.host="${RDSHostname}" 
+          -Dfcrepo.postgresql.port="${RDSPort}" 
+          -Dfcrepo.postgresql.username="${RDSUsername}" 
+          -Dfcrepo.postgresql.password="${RDSPassword}" 
+          -Daws.accessKeyId="${BinaryBucketAccess}" 
+          -Daws.secretKey="${BinaryBucketAccess.SecretAccessKey}" 
+          -Daws.bucket="${BinaryBucket}" 
+          -Dfcrepo.ispn.jgroups.configuration="file:/etc/fcrepo/jgroups-fcrepo-tcp.xml" 
+          -Djgroups.udp.mcast_addr=239.42.42.42 
+          -Dfcrepo.ispn.configuration=/etc/fcrepo/infinispan.xml 
+          -Dfcrepo.modeshape.configuration="file:/etc/fcrepo/repository.json" 
+          -Dfcrepo.spring.configuration="file:/etc/fcrepo/fcrepo-config.xml"'
       - Namespace: aws:elasticbeanstalk:application
         OptionName: Application Healthcheck URL
         Value: /rest
