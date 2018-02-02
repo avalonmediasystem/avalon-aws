@@ -137,6 +137,15 @@ Resources:
     Properties:
       GroupDescription: Fedora security group
       VpcId: !Ref 'VPC'
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Ref 'FedoraLbSecurityGroup'
+        IpProtocol: tcp
+        FromPort: '7800'
+        ToPort: '7800'
+      - SourceSecurityGroupId: !Ref 'FedoraLbSecurityGroup'
+        IpProtocol: udp
+        FromPort: '0 - 65535'
+        ToPort: '0 - 65535'
       Tags:
       - Key: Name
         Value: !Sub '${StackName}-fcrepo'
