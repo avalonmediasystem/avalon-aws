@@ -95,9 +95,9 @@ Resources:
     Type: AWS::ElasticBeanstalk::Environment
     Properties:
       ApplicationName: !Ref 'ApplicationName'
-      Description: Avalon worker Environment
+      Description: Donut worker Environment
       EnvironmentName: !Sub '${StackName}-workers'
-      TemplateName: !Ref 'AvalonWorkersConfigurationTemplate'
+      TemplateName: !Ref 'DonutWorkersConfigurationTemplate'
       VersionLabel: !Ref 'VersionLabel'
       Tier:
         Name: Worker
@@ -160,11 +160,11 @@ Resources:
         - Namespace: aws:elasticbeanstalk:sqsd
           OptionName: WorkerQueueURL
           Value: !Ref 'DefaultQueue'
-  AvalonWorkersConfigurationTemplate:
+  DonutWorkersConfigurationTemplate:
     Type: AWS::ElasticBeanstalk::ConfigurationTemplate
     Properties:
       ApplicationName: !Ref 'ApplicationName'
-      Description: Avalon configuration template
+      Description: Donut configuration template
       OptionSettings:
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: InstanceType
@@ -241,7 +241,7 @@ Resources:
       - Namespace: aws:elasticbeanstalk:managedactions
         OptionName: PreferredStartTime
         Value: Sun:00:00
-      SolutionStackName: 64bit Amazon Linux 2017.09 v2.6.0 running Ruby 2.3 (Puma)
+      SolutionStackName: 64bit Amazon Linux 2017.09 v2.6.1 running Ruby 2.4 (Puma)
 Outputs:
   EnvironmentName:
     Value: !Ref 'WorkerEnvironment'
