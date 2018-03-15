@@ -38,15 +38,6 @@ Parameters:
     Type: String
     Description: Secret key for Rails
     NoEcho: 'true'
-  FcrepoUrl:
-    Type: String
-    Description: URL to Fedora
-  SolrUrl:
-    Type: String
-    Description: URL to Solr
-  ZookeeperHosts:
-    Type: String
-    Description: A list of zookeeper host IP + ports
   RedisHost:
     Type: String
     Description: URL to Redis
@@ -69,12 +60,6 @@ Parameters:
   RDSPort:
     Type: String
     Description: Database Port
-  QueuePrefix:
-    Type: String
-    Description: SQS Queue prefix
-  DefaultQueue:
-    Type: String
-    Description: SQS Default Queue
   IamInstanceProfile:
     Type: String
     Description: ARN for an IAM profile to assign to the EC2 instances
@@ -235,9 +220,6 @@ Resources:
           OptionName: DISABLE_SQS_CONSUMER
           Value: 'true'
         - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: FEDORA_URL
-          Value: !Ref 'FcrepoUrl'
-        - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: REDIS_HOST
           Value: !Ref 'RedisHost'
         - Namespace: aws:elasticbeanstalk:application:environment
@@ -247,17 +229,8 @@ Resources:
           OptionName: SECRET_KEY_BASE
           Value: !Ref 'SecretKeyBase'
         - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__ACTIVE_JOB_QUEUE__URL
-          Value: !Ref 'DefaultQueue'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__SOLR__URL
-          Value: !Ref 'SolrUrl'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__ZOOKEEPER__CONNECTION_STR
-          Value: !Ref 'ZookeeperHosts'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SOLR_URL
-          Value: !Ref 'SolrUrl'
+          OptionName: SSM_PARAM_PATH
+          Value: !Sub '/${StackName}/${ApplicationName}'
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: STACK_NAME
           Value: !Ref 'StackName'

@@ -38,15 +38,6 @@ Parameters:
     Type: String
     Description: Secret key for Rails
     NoEcho: 'true'
-  FcrepoUrl:
-    Type: String
-    Description: URL to Fedora
-  SolrUrl:
-    Type: String
-    Description: URL to Solr
-  ZookeeperHosts:
-    Type: String
-    Description: A list of zookeeper host IP + ports
   RedisHost:
     Type: String
     Description: URL to Redis
@@ -69,15 +60,9 @@ Parameters:
   RDSPort:
     Type: String
     Description: Database Port
-  QueuePrefix:
-    Type: String
-    Description: SQS Queue prefix
   DefaultQueue:
     Type: String
     Description: SQS Default Queue
-  DefaultQueueName:
-    Type: String
-    Description: SQS Default Queue Name
   IamInstanceProfile:
     Type: String
     Description: ARN for an IAM profile to assign to the EC2 instances
@@ -109,9 +94,6 @@ Resources:
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: DATABASE_URL
           Value: !Sub 'postgresql://${RDSUsername}:${RDSPassword}@${RDSHostname}:${RDSPort}/${RDSDatabaseName}'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: FEDORA_URL
-          Value: !Ref 'FcrepoUrl'
         - Namespace: aws:elasticbeanstalk:sqsd
           OptionName: HttpConnections
           Value: '15'
@@ -131,29 +113,11 @@ Resources:
           OptionName: PROCESS_ACTIVE_ELASTIC_JOBS
           Value: true
         - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__ACTIVE_JOB_QUEUE__URL
-          Value: !Ref 'DefaultQueue'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__DOMAIN__HOST
-          Value: !Sub '${StackName}.${HostedZoneName}'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__SOLR__COLLECTION_OPTIONS__REPLICATION_FACTOR
-          Value: '3'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__SOLR__COLLECTION_OPTIONS__RULE
-          Value: shard:*,replica:<2,cores:<5~
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__SOLR__URL
-          Value: !Ref 'SolrUrl'
-        - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: SETTINGS__WORKER
           Value: 'true'
         - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SETTINGS__ZOOKEEPER__CONNECTION_STR
-          Value: !Ref 'ZookeeperHosts'
-        - Namespace: aws:elasticbeanstalk:application:environment
-          OptionName: SOLR_URL
-          Value: !Ref 'SolrUrl'
+          OptionName: SSM_PARAM_PATH
+          Value: !Sub '/${StackName}/${ApplicationName}'
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: STACK_NAME
           Value: !Ref 'StackName'

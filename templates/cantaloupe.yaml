@@ -11,30 +11,25 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
-  PublicSubnets:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: List of an existing subnet IDs to use for the load balancer
-  PrivateSubnets:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: List of an existing subnet IDs to use for the auto scaling group
   S3Bucket:
     Type: String
     Description: S3 bucket with the cantaloupe war
   S3Key:
     Type: String
     Description: S3 key to the cantaloupe war
+    Default: cantaloupe.zip
   MinSize:
     Type: Number
     Description: Minimum number of instances
+    Default: 1
   MaxSize:
     Type: Number
     Description: Maximum number of instances
-  SecurityGroups:
-    Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: A list of security groups, such as sg-a123fd85.
+    Default: 3
   InstanceType:
     Type: String
     Description: The EC2 instance type
+    Default: 't2.medium'
   TiffBucket:
     Type: String
     Description: S3 Bucket where pyramid TIFFs will be stored
@@ -92,9 +87,6 @@ Resources:
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: SSHSourceRestriction
         Value: tcp, 22, 22, 10.0.0.0/16
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: SecurityGroups
-        Value: !Join [ ',', !Ref 'SecurityGroups' ]
       - Namespace: aws:elb:loadbalancer
         OptionName: CrossZone
         Value: 'true'
@@ -103,10 +95,12 @@ Resources:
         Value: 'true'
       - Namespace: aws:ec2:vpc
         OptionName: Subnets
-        Value: !Join [ ',', !Ref 'PrivateSubnets' ]
+        Value:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PrivateSubnets'
       - Namespace: aws:ec2:vpc
         OptionName: ELBSubnets
-        Value: !Join [ ',', !Ref 'PublicSubnets' ]
+        Value:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PublicSubnets'
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: IamInstanceProfile
         Value: !Ref 'EC2InstanceProfile'
@@ -173,9 +167,25 @@ Resources:
       Path: /
       Roles:
       - !Ref 'EC2Role'
+  CloudFrontDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          PathPattern: '*'
+          TargetOriginId: !Sub '${AWS::StackName}-CantaloupeDistribution'
+          ViewerProtocolPolicy: 'allow-all'
+          ForwardedValues:
+            Headers:
+              - Origin
+      Origins:
+        - CustomOriginConfig:
+            OriginProtocolPolicy: 'http-only'
+          DomainName: !Ref 'CantaloupeEnvironment.EndpointURL'
+          Id: !Sub '${AWS::StackName}-CantaloupeDistribution'
 Outputs:
   Endpoint:
     Description: IIIF Endpoint
-    Value: !Sub "http://${CantaloupeEnvironment.EndpointURL}/iiif/2/"
+    Value: !Sub "http://${CloudFrontDistribution.DomainName}/iiif/2/"
     Export:
       Name: !Sub '${StackName}-${ResourceName}-Endpoint'

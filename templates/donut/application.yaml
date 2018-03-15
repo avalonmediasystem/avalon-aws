@@ -59,9 +59,6 @@ Parameters:
     Type: String
     Description: Password for Database
     NoEcho: 'true'
-  QueuePrefix:
-    Type: String
-    Description: SQS Queue prefix
   WebappInstanceType:
     Type: String
     Description: The EC2 instance type
@@ -101,6 +98,99 @@ Parameters:
 Conditions:
   CreateContinuousDeployment: !Equals [!Ref 'ContinuousDeployment', 'true']
 Resources:
+  ActiveJobQueueUrlParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/active_job_queue/url"
+      Type: "String"
+      Value: !Ref DefaultQueue
+  AwsBucketsBatchParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/aws/buckets/batch"
+      Type: "String"
+      Value: !Ref "BatchBucket"
+  AwsBucketsDropboxParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/aws/buckets/dropbox"
+      Type: "String"
+      Value: !Ref "DropboxBucket"
+  AwsBucketsPyramidsParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/aws/buckets/pyramids"
+      Type: "String"
+      Value: !Ref "PyramidsBucket"
+  AwsBucketsUploadsParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/aws/buckets/uploads"
+      Type: "String"
+      Value: !Ref "UploadBucket"
+  DomainHostParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/domain/host"
+      Type: "String"
+      Value: !GetAtt 'webapp.Outputs.URL'
+  FedoraUrlParameter:
+    Type: "AWS::SSM:Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/fedora/url"
+      Type: "String"
+      Value:
+        Fn::ImportValue: !Sub '${InfrastructureStack}-fcrepo-URL'
+  IiifEndpointParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/iiif/endpoint"
+      Type: "String"
+      Value: "http://d3bwn2uzan42hc.cloudfront.net/iiif/2/"
+  SolrUrlParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/solr/url"
+      Type: "String"
+      Value:
+        Fn::Join:
+        - '/'
+        - - Fn::ImportValue: !Sub '${InfrastructureStack}-solr-URL'
+          - !Ref 'AWS::StackName'
+  SolrCollectionOptionsReplicationFactorParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/solr/collection_options/replication_factor"
+      Type: "String"
+      Value: "3"
+  SolrCollectionOptionsRuleParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/solr/collection_options/rule"
+      Type: "String"
+      Value: "shard:*,replica:<2,cores:<5~"
+  ZookeeperConnectionStrParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Settings/zookeeper/connection_str"
+      Type: "String"
+      Value:
+        Fn::Join:
+        - '/'
+        - - Fn::ImportValue: !Sub '${InfrastructureStack}-zookeeper-EndpointAddress'
+          - configs
+  EFSDerivativeVolumeParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Deploy/derivative_volume"
+      Type: "String"
+      Value: Value: !Sub '${DerivativeVolume}.efs.${AWS::Region}.amazonaws.com'
+  EFSWorkingVolumeParameter:
+    Type: "AWS::SSM::Parameter"
+    Parameters:
+      Name: !Sub "/${StackName}/${HydraApplication}/Deploy/working_volume"
+      Type: "String"
+      Value: Value: !Sub '${WorkingVolume}.efs.${AWS::Region}.amazonaws.com'
   HydraApplication:
     Type: AWS::ElasticBeanstalk::Application
     Properties:
@@ -130,6 +220,88 @@ Resources:
       DBName: !Ref 'RDSDatabaseName'
       DBUser: !Ref 'RDSUsername'
       DBPassword: !Ref 'RDSPassword'
+  UploadBucket:
+    DeletionPolicy: Retain
+    Type: "AWS::S3::Bucket"
+    Parameters:
+      BucketName: !Sub '${StackName}-${HydraApplication}-upload'
+  BatchBucket:
+    DeletionPolicy: Retain
+    Type: "AWS::S3::Bucket"
+    Parameters:
+      BucketName: !Sub '${StackName}-${HydraApplication}-batch'
+  DropboxBucket:
+    DeletionPolicy: Retain
+    Type: "AWS::S3::Bucket"
+    Parameters:
+      BucketName: !Sub '${StackName}-${HydraApplication}-dropbox'
+  PyramidsBucket:
+    DeletionPolicy: Retain
+    Type: "AWS::S3::Bucket"
+    Parameters:
+      BucketName: !Sub '${StackName}-${HydraApplication}-pyramids'
+  UploadBucketAccess:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref 'UploadBucket'
+      PolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Resource:
+          - !Sub 'arn:aws:s3:::${UploadBucket}'
+          - !Sub 'arn:aws:s3:::${UploadBucket}/*'
+          Principal:
+            AWS:
+            - !GetAtt 'EC2Role.Arn'
+          Action:
+          - 's3:*'
+  BatchBucketAccess:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref 'BatchBucket'
+      PolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Resource:
+          - !Sub 'arn:aws:s3:::${BatchBucket}'
+          - !Sub 'arn:aws:s3:::${BatchBucket}/*'
+          Principal:
+            AWS:
+            - !GetAtt 'EC2Role.Arn'
+          Action:
+          - 's3:Get*'
+          - 's3:List*'
+  DropboxBucketAccess:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref 'DropboxBucket'
+      PolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Resource:
+          - !Sub 'arn:aws:s3:::${DropboxBucket}'
+          - !Sub 'arn:aws:s3:::${DropboxBucket}/*'
+          Principal:
+            AWS:
+            - !GetAtt 'EC2Role.Arn'
+          Action:
+          - 's3:Get*'
+          - 's3:List*'
+  PyramidsBucketAccess:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref 'PyramidsBucket'
+      PolicyDocument:
+        Statement:
+        - Effect: "Allow"
+          Resource:
+          - !Sub 'arn:aws:s3:::${PyramidsBucket}'
+          - !Sub 'arn:aws:s3:::${PyramidsBucket}/*'
+          Principal:
+            AWS:
+            - !GetAtt 'EC2Role.Arn'
+          Action:
+          - 's3:*'
   ConfigurationBucketAccess:
     Type: "AWS::S3::BucketPolicy"
     Properties:
@@ -171,18 +343,6 @@ Resources:
         HostedZoneName:
           Fn::ImportValue: !Sub '${InfrastructureStack}-dns-PublicZoneName'
         SecretKeyBase: !Ref 'SecretKeyBase'
-        FcrepoUrl:
-          Fn::ImportValue: !Sub '${InfrastructureStack}-fcrepo-URL'
-        SolrUrl:
-          Fn::Join:
-          - '/'
-          - - Fn::ImportValue: !Sub '${InfrastructureStack}-solr-URL'
-            - !Ref 'AWS::StackName'
-        ZookeeperHosts:
-          Fn::Join:
-          - '/'
-          - - Fn::ImportValue: !Sub '${InfrastructureStack}-zookeeper-EndpointAddress'
-            - configs
         RedisHost:
           Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointAddress'
         RedisPort:
@@ -194,8 +354,6 @@ Resources:
           Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointAddress'
         RDSPort:
           Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointPort'
-        QueuePrefix: !Ref 'QueuePrefix'
-        DefaultQueue: !Ref 'DefaultQueue'
         BeanstalkSNSTopic: !GetAtt 'slack.Outputs.BeanstalkSNSTopic'
         InstanceType: !Ref 'WebappInstanceType'
         HealthReportingSystemType: !Ref 'WebappHealthReportingSystemType'
@@ -227,18 +385,6 @@ Resources:
         HostedZoneName:
           Fn::ImportValue: !Sub '${InfrastructureStack}-dns-PublicZoneName'
         SecretKeyBase: !Ref 'SecretKeyBase'
-        FcrepoUrl:
-          Fn::ImportValue: !Sub '${InfrastructureStack}-fcrepo-URL'
-        SolrUrl:
-          Fn::Join:
-          - '/'
-          - - Fn::ImportValue: !Sub '${InfrastructureStack}-solr-URL'
-            - !Ref 'AWS::StackName'
-        ZookeeperHosts:
-          Fn::Join:
-          - '/'
-          - - Fn::ImportValue: !Sub '${InfrastructureStack}-zookeeper-EndpointAddress'
-            - configs
         RedisHost:
           Fn::ImportValue: !Sub '${InfrastructureStack}-redis-EndpointAddress'
         RedisPort:
@@ -250,14 +396,27 @@ Resources:
           Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointAddress'
         RDSPort:
           Fn::ImportValue: !Sub '${InfrastructureStack}-db-EndpointPort'
-        QueuePrefix: !Ref 'QueuePrefix'
         DefaultQueue: !Ref 'DefaultQueue'
-        DefaultQueueName: !GetAtt 'DefaultQueue.QueueName'
         BeanstalkSNSTopic: !GetAtt 'slack.Outputs.BeanstalkSNSTopic'
         IamInstanceProfile: !GetAtt 'EC2InstanceProfile.Arn'
         InstanceType: !Ref 'WorkerInstanceType'
         HealthReportingSystemType: !Ref 'WorkerHealthReportingSystemType'
       TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/donut/worker.yaml'
+  cantaloupe:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        StackName: !Ref 'AWS::StackName'
+        KeyName: !Ref 'KeyName'
+        TiffBucket: !Ref 'PyramidsBucket'
+        PublicSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PublicSubnets'
+        PrivateSubnets:
+          Fn::ImportValue: !Sub '${InfrastructureStack}-vpc-PrivateSubnets'
+        S3Bucket: !Ref 'S3S3BucketEB'
+        SecurityGroups:
+          - Fn::ImportValue: !Sub '${InfrastructureStack}-sg-Default'
+    TemplateURL: !Sub 'https://s3.amazonaws.com/${S3Bucket}/cloudformation/${S3KeyPrefix}/templates/cantaloupe.yaml'
   DefaultQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -332,6 +491,73 @@ Resources:
       Environment:
         Secret: !Ref 'SecretKeyBase'
         QueueUrl: !Ref 'DefaultQueue'
+  EFSSecurityGroup:
+    Type: "AWS::EC2:SecurityGroup"
+    Properties:
+      GroupDescription: !Sub '${HydraApplication} EFS Security Group'
+      VpcId:
+        Fn::ImportValue: !Sub '${StackName}-vpc-VPCID'
+      SecurityGroupIngress:
+      - SourceSecurityGroupId: !Select [ 0, !Ref 'SecurityGroups' ]
+        IpProtocol: tcp
+        FromPort: '2049'
+        ToPort: '2049'
+  DerivativeVolume:
+    Type: "AWS::EFS::FileSystem"
+    DeletionPolicy: Retain
+    Properties:
+      FileSystemTags:
+      - Key: Name
+        Value: !Sub '${StackName}-${HydraApplication}-derivatives'
+  DerivativeMountA:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'DerivativeVolume'
+      SubnetId: !Select [ 0, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
+  DerivativeMountB:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'DerivativeVolume'
+      SubnetId: !Select [ 1, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
+  DerivativeMountC:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'DerivativeVolume'
+      SubnetId: !Select [ 2, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
+  WorkingVolume:
+    Type: "AWS::EFS::FileSystem"
+    DeletionPolicy: Retain
+    Properties:
+      FileSystemTags:
+      - Key: Name
+        Value: !Sub '${StackName}-${HydraApplication}-working'
+  WorkingMountA:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'WorkingVolume'
+      SubnetId: !Select [ 0, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
+  WorkingMountB:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'WorkingVolume'
+      SubnetId: !Select [ 1, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
+  WorkingMountC:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref 'WorkingVolume'
+      SubnetId: !Select [ 2, !Ref 'SubnetID' ]
+      SecurityGroups:
+      - !Ref 'EFSSecurityGroup'
 Outputs:
   URL:
     Description: URL of the AWS Elastic Beanstalk Environment
