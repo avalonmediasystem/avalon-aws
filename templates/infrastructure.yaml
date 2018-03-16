@@ -208,7 +208,6 @@ Resources:
         ZookeeperEnsembleMaxSize: !Ref 'ZookeeperEnsembleMaxSize'
         ZookeeperSecurityGroups: !Join [',', [!GetAtt [securitygroups, Outputs.Zookeeper],
             !GetAtt [securitygroups, Outputs.Default]]]
-        ZookeeperLBSecurityGroups: !GetAtt [securitygroups, Outputs.ZookeeperLb]
         ZookeeperHealthReportingSystemType: !Ref 'ZookeeperHealthReportingSystemType'
         ZookeeperS3Bucket: !Ref 'S3BucketEB'
         ZookeeperS3Key: !Ref 'ZookeeperS3Key'
@@ -218,7 +217,6 @@ Resources:
         SolrCloudMaxSize: !Ref 'SolrCloudMaxSize'
         SolrSecurityGroups: !Join [',', [!GetAtt [securitygroups, Outputs.Solr], !GetAtt [
             securitygroups, Outputs.Default]]]
-        SolrLBSecurityGroups: !GetAtt [securitygroups, Outputs.SolrLb]
         SolrHealthReportingSystemType: !Ref 'SolrHealthReportingSystemType'
         SolrS3Bucket: !Ref 'S3BucketEB'
         SolrS3Key: !Ref 'SolrS3Key'

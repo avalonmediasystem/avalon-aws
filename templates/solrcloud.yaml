@@ -31,9 +31,6 @@ Parameters:
   ZookeeperSecurityGroups:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: A list of security groups, such as sg-a123fd85.
-  ZookeeperLBSecurityGroups:
-    Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: A list of security groups, such as sg-a123fd85.
   ZookeeperHealthReportingSystemType:
     Type: String
     Description: Health reporting system
@@ -56,9 +53,6 @@ Parameters:
     Type: Number
     Description: Maximum number solr of instances
   SolrSecurityGroups:
-    Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: A list of security groups, such as sg-a123fd85.
-  SolrLBSecurityGroups:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: A list of security groups, such as sg-a123fd85.
   SolrHealthReportingSystemType:
